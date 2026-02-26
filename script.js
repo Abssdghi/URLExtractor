@@ -1,6 +1,7 @@
 async function getImagesFromUrl(url) {
     try {
-        const response = await fetch("https://proxy.corsfix.com/?" + url);        
+        // const response = await fetch("https://proxy.corsfix.com/?" + url);        
+        const response = await fetch(url);        
         const html = await response.text();
         
         const parser = new DOMParser();
@@ -26,7 +27,8 @@ async function getImagesFromUrl(url) {
 
 async function getLinksFromUrl(url) {
     try {
-        const response = await fetch("https://proxy.corsfix.com/?" + url);        
+        // const response = await fetch("https://proxy.corsfix.com/?" + url);        
+        const response = await fetch(url);        
         const html = await response.text();
         
         const parser = new DOMParser();
