@@ -53,6 +53,32 @@ async function getLinksFromUrl(url) {
     }
 }
 
+async function getResponse(url) {
+    try {
+        const response = await fetch(url, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            }
+        });
+        
+        if (!response.ok) {
+            console.error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log(`Json Response: ${data}`);
+
+        const textData = await response.text();
+        console.log(`Text Response: ${textData}`);
+
+        return data, textData
+    
+    } catch (error) {
+        console.error("Error fetching url:", error);
+    }
+}
+
 async function showImages() {
     let url;
     url = document.getElementById('urlInput').value;
@@ -81,8 +107,8 @@ async function showImages() {
         });
         
     } catch (error) {
-        console.error('خطا:', error);
-        alert('خطا در پردازش درخواست');
+        console.error('error:', error);
+        alert('error');
     }
 }
 
@@ -111,7 +137,32 @@ async function showLinks() {
         });
         
     } catch (error) {
-        console.error('خطا:', error);
-        alert('خطا در پردازش درخواست');
+        console.error('error:', error);
+        alert('error');
+    }
+}
+
+async function showResponse() {
+    let url;
+    url = document.getElementById('urlInput').value;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+    }
+    
+    try {
+        const response = await getResponse(url);
+        
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = `res: ${response}`;
+        
+        // if (resultsDiv.length === 0) {
+        //     resultsDiv.innerHTML = '<p>هیچ پاسخی در این لینک یافت نشد</p>';
+        //     return;
+        // }
+
+        // resultsDiv.innerHTML = '<p>check console.</p>';        
+    } catch (error) {
+        console.error('error:', error);
+        alert('error');
     }
 }
