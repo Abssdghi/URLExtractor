@@ -66,10 +66,10 @@ async function getResponse(url) {
             console.error(`HTTP error! status: ${response.status}`);
         }
         
-        const data = await response.json();
+        const textData = await response.text();
+        let data = null; try { data = JSON.parse(textData); } catch (e) {}
         console.log(`Json Response: ${data}`);
 
-        const textData = await response.text();
         console.log(`Text Response: ${textData}`);
 
         return data, textData
