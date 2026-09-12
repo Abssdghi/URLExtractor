@@ -159,11 +159,13 @@
     }
 
     var PROXY_BUILDERS = [
-        function (url) { return 'https://corsproxy.io/?key=webdemo1&url=' + encodeURIComponent(url); },
         function (url) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url); },
         function (url) { return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url); },
-        function (url) { return 'https://proxy.cors.sh/' + url; },
-        function (url) { return 'https://proxy.corsfix.com/?' + url; }
+        function (url) { return 'https://proxy.corsfix.com/?' + url; },
+        function (url) { return 'https://api.cors.lol/url=' + url; },
+        function (url) { return 'https://test.cors.workers.dev/?' + url; },
+        function (url) { return 'https://cors-proxy.htmldriven.com/?url=' + encodeURIComponent(url); },
+        function (url) { return 'https://corsproxy.io/?url=' + encodeURIComponent(url); }
     ];
 
     function proxyUrlFor(url) {
@@ -175,25 +177,59 @@
         var attempts = [url].concat(PROXY_BUILDERS.map(function (builder) {
             return builder(url);
         }));
-        var lastError = null;
 
-        return attempts.reduce(function (chain, target, index) {
-            return chain.catch(function (previousError) {
-                if (previousError) lastError = previousError;
+        return new Promise(function (resolve, reject) {
+            var remaining = attempts.length;
+            var fallbackResults = [];
+            var lastError = null;
+            var settled = false;
 
-                return fetch(target, opts).then(function (response) {
-                    var isLast = index === attempts.length - 1;
-                    if (response.ok || isLast) {
-                        return { response: response, via: index === 0 ? 'direct' : 'proxy ' + index };
+            function finish() {
+                if (settled) return;
+                settled = true;
+
+                if (fallbackResults.length) {
+                    fallbackResults.sort(function (a, b) { return b.index - a.index; });
+                    var chosen = fallbackResults[0];
+                    resolve({ response: chosen.response, via: chosen.via });
+                    return;
+                }
+
+                reject(lastError || new Error('Network request failed'));
+            }
+
+            attempts.forEach(function (target, index) {
+                var via = index === 0 ? 'direct' : 'proxy ' + index;
+
+                fetch(target, opts).then(function (response) {
+                    if (settled) return;
+
+                    if (response.ok) {
+                        settled = true;
+                        resolve({ response: response, via: via });
+                        return;
                     }
+
                     var err = new Error('Request failed with status ' + response.status + (response.statusText ? ' ' + response.statusText : ''));
                     err.status = response.status;
-                    throw err;
+                    fallbackResults.push({ response: response, via: via, index: index });
+                    lastError = err;
+                    remaining -= 1;
+
+                    if (remaining === 0) {
+                        finish();
+                    }
+                }).catch(function (err) {
+                    if (settled) return;
+
+                    lastError = err;
+                    remaining -= 1;
+
+                    if (remaining === 0) {
+                        finish();
+                    }
                 });
             });
-        }, Promise.reject(null)).catch(function (err) {
-            if (err) throw err;
-            throw lastError || new Error('Network request failed');
         });
     }
 
