@@ -158,13 +158,23 @@
         }
     }
 
+    var PROXY_BUILDERS = [
+        function (url) { return 'https://corsproxy.io/?key=webdemo1&url=' + encodeURIComponent(url); },
+        function (url) { return 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url); },
+        function (url) { return 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(url); },
+        function (url) { return 'https://proxy.cors.sh/' + url; },
+        function (url) { return 'https://proxy.corsfix.com/?' + url; }
+    ];
+
     function proxyUrlFor(url) {
-        return 'https://corsproxy.io/?key=webdemo1&url=' + encodeURIComponent(url);
+        return PROXY_BUILDERS[0](url);
     }
 
     function fetchWithFallback(url, options) {
         var opts = options || {};
-        var attempts = [url, proxyUrlFor(url)];
+        var attempts = [url].concat(PROXY_BUILDERS.map(function (builder) {
+            return builder(url);
+        }));
         var lastError = null;
 
         return attempts.reduce(function (chain, target, index) {
@@ -174,7 +184,7 @@
                 return fetch(target, opts).then(function (response) {
                     var isLast = index === attempts.length - 1;
                     if (response.ok || isLast) {
-                        return { response: response, via: index === 0 ? 'direct' : 'proxy' };
+                        return { response: response, via: index === 0 ? 'direct' : 'proxy ' + index };
                     }
                     var err = new Error('Request failed with status ' + response.status + (response.statusText ? ' ' + response.statusText : ''));
                     err.status = response.status;
