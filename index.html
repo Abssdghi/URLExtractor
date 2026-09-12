@@ -115,57 +115,25 @@
         const results = document.getElementById('results');
         if (!results) return;
 
-        function formatResponse() {
+        function prettify() {
             const text = results.textContent.trim();
             if (!text.startsWith('res:')) return;
             const jsonStr = text.slice(4).trim();
             try {
                 const data = JSON.parse(jsonStr);
-                let html = '<div class="response-formatted">';
-                if (data.question) {
-                    html += `<h3>${escapeHtml(data.question)}</h3>`;
-                }
-                html += '<p>';
-                if (data.type) html += `<strong>Type:</strong> ${escapeHtml(data.type)} `;
-                if (data.rating) html += `<strong>Rating:</strong> ${escapeHtml(data.rating)} `;
-                if (data.id) html += `<strong>ID:</strong> ${escapeHtml(data.id)}`;
-                html += '</p>';
-                if (data.translations) {
-                    html += '<h4>Translations</h4><table><tr><th>Language</th><th>Translation</th></tr>';
-                    for (const [lang, trans] of Object.entries(data.translations)) {
-                        html += `<tr><td>${escapeHtml(lang)}</td><td>${escapeHtml(trans)}</td></tr>`;
-                    }
-                    html += '</table>';
-                }
-                if (data.pack) {
-                    html += `<p><strong>Pack:</strong> ${escapeHtml(data.pack)}</p>`;
-                }
-                html += '</div>';
-                results.innerHTML = html;
+                const pre = document.createElement('pre');
+                pre.textContent = JSON.stringify(data, null, 2);
+                results.innerHTML = '';
+                results.appendChild(pre);
             } catch (e) {
                 // not valid JSON, leave as is
             }
         }
 
-        function escapeHtml(unsafe) {
-            return unsafe
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        const observer = new MutationObserver(function(mutations) {
-            if (results.textContent.trim().startsWith('res:')) {
-                formatResponse();
-            }
-        });
+        const observer = new MutationObserver(prettify);
         observer.observe(results, { childList: true, characterData: true, subtree: true });
 
-        if (results.textContent.trim().startsWith('res:')) {
-            formatResponse();
-        }
+        prettify();
     })();
     </script>
 </body>
