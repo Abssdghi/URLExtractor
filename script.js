@@ -1,7 +1,16 @@
+async function fetchWithFallback(url, options) {
+    try {
+        return await fetch(url, options);
+    } catch (error) {
+        const proxyUrl = 'https://corsproxy.io/?key=webdemo1&url=' + encodeURIComponent(url);
+        return await fetch(proxyUrl, options);
+    }
+}
+
 async function getImagesFromUrl(url) {
     try {
         // const response = await fetch("https://proxy.corsfix.com/?" + url);        
-        const response = await fetch(url);        
+        const response = await fetchWithFallback(url);        
         const html = await response.text();
         
         const parser = new DOMParser();
@@ -28,7 +37,7 @@ async function getImagesFromUrl(url) {
 async function getLinksFromUrl(url) {
     try {
         // const response = await fetch("https://proxy.corsfix.com/?" + url);        
-        const response = await fetch(url);        
+        const response = await fetchWithFallback(url);        
         const html = await response.text();
         
         const parser = new DOMParser();
@@ -55,7 +64,7 @@ async function getLinksFromUrl(url) {
 
 async function getResponse(url) {
     try {
-        const response = await fetch(url, {
+        const response = await fetchWithFallback(url, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
